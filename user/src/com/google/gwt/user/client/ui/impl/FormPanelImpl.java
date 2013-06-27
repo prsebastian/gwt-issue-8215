@@ -80,6 +80,10 @@ public class FormPanelImpl {
         iframe.__formAction = form.action;
       return listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormSubmit()();
     });
+    
+    form.onreset = $entry(function() {
+      listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormReset()();
+    });
   }-*/;
 
   /**

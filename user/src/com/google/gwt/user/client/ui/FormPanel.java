@@ -63,6 +63,51 @@ import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
  */
 @SuppressWarnings("deprecation")
 public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanelImplHost {
+
+  /**
+   * Fired when the form is reseted.
+   */
+  public static class ResetEvent extends GwtEvent<ResetHandler> {
+    /**
+     * The event type.
+     */
+    private static Type<ResetHandler> TYPE;
+
+    /**
+     * Handler hook.
+     *
+     * @return the handler hook
+     */
+    public static Type<ResetHandler> getType() {
+      if (TYPE == null) {
+        TYPE = new Type<ResetHandler>();
+      }
+      return TYPE;
+    }
+
+    @Override
+    public final Type<FormPanel.ResetHandler> getAssociatedType() {
+      return getType();
+    }
+
+    @Override
+    protected void dispatch(FormPanel.ResetHandler handler) {
+      handler.onReset(this);
+    }
+  }
+
+  /**
+   * Handler for {@link FormPanel.ResetEvent} events.
+   */
+  public interface ResetHandler extends EventHandler {
+    /**
+     * Fired when the form is reseted.
+     *     
+     * @param event the event
+     */
+    void onReset(FormPanel.ResetEvent event);
+  }
+  
   /**
    * Fired when a form has been submitted successfully.
    */
@@ -422,6 +467,16 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
   }
 
   /**
+   * Adds a {@link SubmitEvent} handler.
+   *
+   * @param handler the handler
+   * @return the handler registration used to remove the handler
+   */
+  public HandlerRegistration addResetHandler(ResetHandler handler) {
+    return addHandler(handler, ResetEvent.getType());
+  }
+  
+  /**
    * Adds a {@link SubmitCompleteEvent} handler.
    *
    * @param handler the handler
@@ -482,6 +537,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
     return getFormElement().getTarget();
   }
 
+  @Override
+  public void onFormReset() {
+    fireResetEvent();
+  }
+  
   /**
    * Fired when a form is submitted.
    *
@@ -508,6 +568,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    * Resets the form, clearing all fields.
    */
   public void reset() {
+    fireResetEvent();
     impl.reset(getElement());
   }
 
@@ -619,6 +680,14 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
 
   /**
    * Fire a {@link FormPanel.SubmitEvent}.
+   */
+  private void fireResetEvent() {
+    FormPanel.ResetEvent event = new FormPanel.ResetEvent();
+    fireEvent(event);
+  }
+  
+  /**
+   * Fire a {@link FormPanel.SubmitEvent}.
    *
    * @return true to continue, false if canceled
    */
@@ -631,7 +700,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
   private FormElement getFormElement() {
     return getElement().cast();
   }
-
+ 
   /**
    * Returns true if the form is submitted, false if canceled.
    */

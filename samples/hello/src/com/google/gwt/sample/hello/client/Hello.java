@@ -18,9 +18,19 @@ package com.google.gwt.sample.hello.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.FormPanel.ResetEvent;
+import com.google.gwt.user.client.ui.FormPanel.ResetHandler;
+import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 
 /**
  * HelloWorld application.
@@ -28,12 +38,60 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class Hello implements EntryPoint {
 
   public void onModuleLoad() {
-    Button b = new Button("Click me", new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        Window.alert("Hello, AJAX");
+    
+    
+    HTMLPanel hp = new HTMLPanel("asd");
+    
+    hp.add(new CheckBox());
+    
+    final FormPanel fp = new FormPanel();
+    
+    fp.add(hp);
+    
+    fp.addSubmitHandler(new SubmitHandler() {
+      
+      @Override
+      public void onSubmit(SubmitEvent event) {
+        
+        Window.alert("onSubmit");
+        
       }
     });
-
-    RootPanel.get().add(b);
+    
+    fp.addResetHandler(new ResetHandler() {
+      
+      @Override
+      public void onReset(ResetEvent event) {
+        
+        Window.alert("onReset");
+        
+      }
+    });
+    
+    
+    Button r = new Button("reset-gwt", new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        fp.reset();
+      }
+    });
+    
+    Button s = new Button("submit-gwt", new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        fp.submit();
+      }
+    });
+    
+    
+    hp.add(r);
+    hp.add(s);
+    
+    SafeHtmlBuilder sh = new SafeHtmlBuilder();
+    sh.appendHtmlConstant("<input type=\"reset\" value=\"reset-html\">");
+    sh.appendHtmlConstant("<input type=\"submit\" value=\"submit-html\">");
+    HTML h = new HTML();
+    h.setHTML(sh.toSafeHtml());
+    hp.add(h);
+    
+    RootPanel.get().add(fp);
   }
 }

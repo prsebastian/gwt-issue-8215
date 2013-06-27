@@ -205,6 +205,23 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     assertEquals("", textBox.getText());
     RootPanel.get().remove(form);
   }
+  
+  public void testNativeReset() {
+    FormPanel form = new FormPanel();
+    RootPanel.get().add(form);
+    TextBox textBox = new TextBox();
+    textBox.setText("Hello World");
+    form.setWidget(textBox);
+    assertEquals("Hello World", textBox.getText());
+    //form.reset();
+    nativeFormReset(form.getElement());
+    assertEquals("", textBox.getText());
+    RootPanel.get().remove(form);
+  }
+  
+  private static native void nativeFormReset(Element form)/*-{
+    form.reset();
+  }-*/;
 
   public void testSubmitAndHideDialog() {
     final FormPanel form = new FormPanel();

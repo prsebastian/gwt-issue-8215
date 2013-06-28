@@ -19,9 +19,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FormPanel.ResetEvent;
+import com.google.gwt.user.client.ui.FormPanel.ResetHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -68,7 +71,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     form.submit();
   }
 
-  public void testFileUpload() {
+  public void testFileUpload() { System.out.println("testFileUpload");
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_POST);
     form.setEncoding(FormPanel.ENCODING_MULTIPART);
@@ -98,7 +101,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
    * Tests submitting using url-encoded get, with all form widgets (other than
    * FileUpload, which requires post/multipart.
    */
-  public void testMethodGet() {
+  public void testMethodGet() { System.out.println("testMethodGet");
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);
     form.setEncoding(FormPanel.ENCODING_URLENCODED);
@@ -162,7 +165,41 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     form.submit();
   }
 
-  public void testNamedTargetSubmitEvent() {
+  public void testNamedTargetResetEvent() { System.out.println("testNamedTargetResetEvent");
+  // Create a form and frame in the document we can wrap.
+  String iframeId = Document.get().createUniqueId();
+  String iframeName = Document.get().createUniqueId();
+  final Element container = Document.get().createDivElement();
+  container.setInnerHTML(
+      "<form method='post' target='" + iframeName + "' action='"
+          + GWT.getModuleBaseURL()
+          + "formHandler?sendHappyHtml'>"
+          + "<input type='reset' id='resetBtn'></input></form>"
+          + "<iframe src=\"javascript:\'\'\" id='" + iframeId + "' "
+          + "name='" + iframeName + "'></iframe>");
+  Document.get().getBody().appendChild(container);
+  
+  // Wrap the form and make sure its target frame is intact.
+  FormPanel form = FormPanel.wrap(container.getFirstChildElement());
+  assertEquals(iframeName, form.getTarget());
+  
+  // Ensure that no synthesized iframe was created.
+  assertNull(form.getSynthesizedIFrame());
+  
+  // reset the form using the reset button and make sure the reset event fires.
+  delayTestFinish(TEST_DELAY);
+  form.addResetHandler(new ResetHandler() {
+    public void onReset(ResetEvent event) {
+      finishTest();
+    }
+  });
+  
+  // if this test fails with a timeout means that the event handler has not been called (natively)
+  
+  Document.get().getElementById("resetBtn").<InputElement>cast().click();
+  }
+  
+  public void testNamedTargetSubmitEvent() { System.out.println("testNamedTargetSubmitEvent");
     // Create a form and frame in the document we can wrap.
     String iframeId = Document.get().createUniqueId();
     String iframeName = Document.get().createUniqueId();
@@ -194,36 +231,104 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     Document.get().getElementById("submitBtn").<InputElement>cast().click();
   }
 
-  public void testReset() {
+  public void testReset() { System.out.println("testReset");
     FormPanel form = new FormPanel();
     RootPanel.get().add(form);
     TextBox textBox = new TextBox();
     textBox.setText("Hello World");
     form.setWidget(textBox);
     assertEquals("Hello World", textBox.getText());
+    System.out.println("reset: normal");
     form.reset();
     assertEquals("", textBox.getText());
     RootPanel.get().remove(form);
   }
   
-  public void testNativeReset() {
+  public void testResetNative() { System.out.println("testResetNative"); // this test makes only sense if an event is called 
     FormPanel form = new FormPanel();
     RootPanel.get().add(form);
     TextBox textBox = new TextBox();
     textBox.setText("Hello World");
     form.setWidget(textBox);
     assertEquals("Hello World", textBox.getText());
-    //form.reset();
+    System.out.println("reset: native");
     nativeFormReset(form.getElement());
     assertEquals("", textBox.getText());
     RootPanel.get().remove(form);
   }
-  
-  private static native void nativeFormReset(Element form)/*-{
-    form.reset();
-  }-*/;
 
-  public void testSubmitAndHideDialog() {
+  public void testResetEvent() { System.out.println("testResetEvent");
+    FormPanel form = new FormPanel();
+    RootPanel.get().add(form);
+    TextBox textBox = new TextBox();
+    textBox.setText("Hello World");
+    form.setWidget(textBox);
+        
+    /*
+     *  the following checkbox is not added to the form on purpose
+     *  in order to reset it via callback
+     */
+    final CheckBox checkBox = new CheckBox();
+    checkBox.setValue(true);
+    
+    /*
+     * first test shall not affect the checkbox
+     */
+    
+    // check preconditions
+    assertEquals("Hello World", textBox.getText());
+    assertTrue(checkBox.getValue());
+    System.out.println("reset: normal");
+    form.reset();
+    // check postconditions
+    assertEquals("", textBox.getText());
+    assertTrue(checkBox.getValue());
+    
+    /*
+     * second test shall affect the checkbox,
+     * to this end a ResetHandler is added to to FormPanel which is called on a ResetEvent 
+     */
+    HandlerRegistration handlerRegistration = form.addResetHandler(new ResetHandler() {
+      
+      @Override
+      public void onReset(ResetEvent event) {
+        checkBox.setValue(false);
+      }
+    });
+        
+    // init preconditions
+    textBox.setText("Hello World");
+    // check preconditions
+    assertEquals("Hello World", textBox.getText());
+    assertTrue(checkBox.getValue());
+    System.out.println("reset: normal");
+    form.reset();
+    // check postconditions
+    assertEquals("", textBox.getText());
+    assertFalse(checkBox.getValue());
+    
+    /*
+     * third test shall not affect the checkbox,
+     * to this end the ResetHandler is removed from the FormPanel 
+     */
+    handlerRegistration.removeHandler();
+    // init preconditions
+    textBox.setText("Hello World");
+    checkBox.setValue(true);
+    // check preconditions
+    assertEquals("Hello World", textBox.getText());
+    assertTrue(checkBox.getValue());
+    System.out.println("reset: normal");
+    form.reset();
+    // check postconditions
+    assertEquals("", textBox.getText());
+    assertTrue(checkBox.getValue());
+    
+    RootPanel.get().remove(form);
+  }
+  
+  
+  public void testSubmitAndHideDialog() { System.out.println("testSubmitAndHideDialog");
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);
     form.setEncoding(FormPanel.ENCODING_URLENCODED);
@@ -259,7 +364,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
    * TODO: Investigate intermittent failures with HtmlUnit.
    */
   @DoNotRunWith(Platform.HtmlUnitUnknown)
-  public void testSubmitFrame() {
+  public void testSubmitFrame() { System.out.println("testSubmitFrame");
     final NamedFrame frame = new NamedFrame("myFrame");
     FormPanel form = new FormPanel(frame);
     form.setMethod(FormPanel.METHOD_POST);
@@ -282,7 +387,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     t.schedule(TEST_DELAY - 2000);
   }
 
-  public void testWrappedForm() {
+  public void testWrappedForm() { System.out.println("testWrappedForm");
     // Create a form and frame in the document we can wrap.
     final String iframeId = Document.get().createUniqueId();
     final String iframeName = Document.get().createUniqueId();
@@ -319,7 +424,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     }.schedule(TEST_DELAY - 2000);
   }
 
-  public void testWrappedFormTargetAssertion() {
+  public void testWrappedFormTargetAssertion() { System.out.println("testWrappedFormTargetAssertion");
     // Testing a dev-mode-only assertion.
     if (!GWT.isScript()) {
       // Create a form element with the target attribute already set.
@@ -337,7 +442,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     }
   }
 
-  public void testWrappedFormWithIFrame() {
+  public void testWrappedFormWithIFrame() { System.out.println("testWrappedFormWithIFrame");
     // Create a form and frame in the document we can wrap.
     final Element container = Document.get().createDivElement();
     container.setInnerHTML(
@@ -370,5 +475,9 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
   private native boolean isHappyDivPresent(Element iframe) /*-{
     return !!iframe.contentWindow.document.getElementById(':)');
+  }-*/;
+    
+  private static native void nativeFormReset(Element form)/*-{
+    form.reset();
   }-*/;
 }

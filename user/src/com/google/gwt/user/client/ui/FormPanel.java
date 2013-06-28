@@ -539,6 +539,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
 
   @Override
   public void onFormReset() {
+    System.out.println("onFormReset: fireResetEvent()");
     fireResetEvent();
   }
   
@@ -548,6 +549,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    * @return true if the form is submitted, false if canceled
    */
   public boolean onFormSubmit() {
+    System.out.println("onFormSubmit: fireSubmitEvent");
     return onFormSubmitImpl();
   }
 
@@ -568,6 +570,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    * Resets the form, clearing all fields.
    */
   public void reset() {
+    System.out.println("reset: fireResetEvent()");
     fireResetEvent();
     impl.reset(getElement());
   }
@@ -622,6 +625,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    * </p>
    */
   public void submit() {
+    System.out.println("submit: fireSubmitEvent");
     // Fire the onSubmit event, because javascript's form.submit() does not
     // fire the built-in onsubmit event.
     if (!fireSubmitEvent()) {
@@ -634,7 +638,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
   @Override
   protected void onAttach() {
     super.onAttach();
-
+    System.out.println("onAttach1");
     if (frameName != null) {
       // Create and attach a hidden iframe to the body element.
       createFrame();
@@ -645,6 +649,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
     // The FormPanel cannot use the built-in GWT event-handling mechanism
     // because there is no standard onLoad event on iframes that works across
     // browsers.
+    System.out.println("onAttach2");
     impl.hookEvents(synthesizedFrame, getElement(), this);
   }
 

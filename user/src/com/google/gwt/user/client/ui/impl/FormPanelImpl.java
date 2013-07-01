@@ -75,12 +75,13 @@ public class FormPanelImpl {
     form.onsubmit = $entry(function() {
       // Hang on to the form's action url, needed in the
       // onload/onreadystatechange handler.
-      if (iframe)
-        iframe.__formAction = form.action;
+      // alert("js: form.onsubmit"); return false;
+      if (iframe) iframe.__formAction = form.action;
       return listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormSubmit()();
     });
     
     form.onreset = $entry(function() {
+      //alert("js: form.onreset");
       listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormReset()();
     });
   }-*/;
@@ -91,6 +92,7 @@ public class FormPanelImpl {
    * @param form the form to be reset
    */
   public native void reset(Element form) /*-{
+    //alert("native reset:");
     form.reset();
   }-*/;
 
@@ -114,9 +116,9 @@ public class FormPanelImpl {
    */
   public native void submit(Element form, Element iframe) /*-{
     // Hang on to the form's action url, needed in the
-    // onload/onreadystatechange handler.
-    if (iframe)
-      iframe.__formAction = form.action;
+    // onload/onreadystatechange handler.    
+    if (iframe) iframe.__formAction = form.action;
+    //alert("native submit:");
     form.submit();
   }-*/;
 

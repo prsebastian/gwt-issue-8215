@@ -16,12 +16,18 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FormPanel.ResetEvent;
 import com.google.gwt.user.client.ui.FormPanel.ResetHandler;
@@ -49,6 +55,40 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     return "com.google.gwt.user.FormPanelTest";
   }
 
+  
+//  public void testButtonClick_onClick() throws Exception {
+//    
+//    System.out.println("testButtonClick_onClick()");
+//    
+//    final String htmlContent
+//        = "<html><head><title>foo</title></head><body>\n"
+//        + "<form id='form1' onSubmit='alert(\"bar\")' onReset='alert(\"reset\")'>\n"
+//        + "    <button type='button' name='button' id='button' "
+//        + "onClick='alert(\"foo\")'>Push me</button>\n"
+//        + "</form></body></html>";
+//
+//    final List<String> collectedAlerts = new ArrayList<String>();
+//    
+//   
+//    WebClient webClient = new WebClient();
+//    MockWebConnection webConnection = new MockWebConnection();
+//    webConnection.setDefaultResponse(htmlContent);
+//    webClient.setAlertHandler(new CollectingAlertHandler(collectedAlerts));
+//    webClient.setWebConnection(webConnection);
+//    
+//    
+//    final HtmlPage page = webClient.getPage("http://localhost");
+//    final HtmlButton button = page.getHtmlElementById("button");
+//
+//    final HtmlPage secondPage = (HtmlPage) button.click();
+//
+//    final String[] expectedAlerts = {"foo"};
+//    assertEquals(expectedAlerts, collectedAlerts);
+//
+//    assertSame(page, secondPage);
+//}
+  
+  
   public void testCancelSubmit() {
     TextBox tb = new TextBox();
     tb.setName("q");
@@ -171,7 +211,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
   String iframeName = Document.get().createUniqueId();
   final Element container = Document.get().createDivElement();
   container.setInnerHTML(
-      "<form method='post' target='" + iframeName + "' action='"
+      "<form id='theform' method='post' target='" + iframeName + "' action='"
           + GWT.getModuleBaseURL()
           + "formHandler?sendHappyHtml'>"
           + "<input type='reset' id='resetBtn'></input></form>"
@@ -187,17 +227,41 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
   assertNull(form.getSynthesizedIFrame());
   
   // reset the form using the reset button and make sure the reset event fires.
-  delayTestFinish(TEST_DELAY);
   form.addResetHandler(new ResetHandler() {
     public void onReset(ResetEvent event) {
-      finishTest();
+      System.out.println("--> onReset fired");
     }
   });
   
+  System.out.println("form.getHandlerManager().isEventHandled(FormPanel.ResetEvent.getType()); "+form.getHandlerManager().isEventHandled(FormPanel.ResetEvent.getType()));
+  
   // if this test fails with a timeout means that the event handler has not been called (natively)
   
-  Document.get().getElementById("resetBtn").<InputElement>cast().click();
+  System.out.println("Document.get().getElementById('resetBtn'): "+Document.get().getElementById("resetBtn"));
+  System.out.println("Document.get().getElementById('resetBtn').<InputElement>cast(): "+Document.get().getElementById("resetBtn").<InputElement>cast());
+  
+  
+  Document.get().getElementById("resetBtn").<ButtonElement>cast().click();
+  
+  Document.get().getElementById("theform").<FormElement>cast().reset();
+  
+  Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+    
+    @Override
+    public void execute() {
+      DOM.getElementById("resetBtn").<ButtonElement>cast().click();
+      
+    }
+  });
+  
+  
   }
+  
+  private static native JavaScriptObject nativeFormResetEvent(Element form)/*-{
+    return form.onreset;
+}-*/;
+  
+  
   
   public void testNamedTargetSubmitEvent() { System.out.println("testNamedTargetSubmitEvent");
     // Create a form and frame in the document we can wrap.
@@ -303,6 +367,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     assertTrue(checkBox.getValue());
     System.out.println("reset: normal");
     form.reset();
+    nativeFormReset(form.getElement());
     // check postconditions
     assertEquals("", textBox.getText());
     assertFalse(checkBox.getValue());

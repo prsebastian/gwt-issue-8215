@@ -571,7 +571,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    */
   public void reset() {
     System.out.println("reset: fireResetEvent()");
-    fireResetEvent();
+    //fireResetEvent();
     impl.reset(getElement());
   }
 
@@ -629,9 +629,10 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
     // Fire the onSubmit event, because javascript's form.submit() does not
     // fire the built-in onsubmit event.
     if (!fireSubmitEvent()) {
+      System.out.println("return");
       return;
     }
-
+    System.out.println("impl.submit: ?");
     impl.submit(getElement(), synthesizedFrame);
   }
 

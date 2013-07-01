@@ -45,6 +45,7 @@ public class Hello implements EntryPoint {
     hp.add(new CheckBox());
     
     final FormPanel fp = new FormPanel();
+    fp.getElement().setId("form");
     
     fp.add(hp);
     
